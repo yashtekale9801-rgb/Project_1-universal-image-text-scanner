@@ -329,10 +329,37 @@ textarea {
   margin-bottom: 12px;
 }
 
+.summary-box {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.summary-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 textarea {
   min-height: 330px;
   resize: vertical;
   line-height: 1.6;
+}
+
+#summaryOutput {
+  min-height: 120px;
+  resize: vertical;
+  background: white;
 }
 
 #processedCanvas {
@@ -379,7 +406,8 @@ textarea {
 
   .preview-header,
   .panel-header,
-  .search-row {
+  .search-row,
+  .summary-header {
     flex-direction: column;
     align-items: flex-start;
   }

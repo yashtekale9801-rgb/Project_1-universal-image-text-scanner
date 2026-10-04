@@ -24,6 +24,8 @@ const undoButton = document.getElementById('undoButton');
 const redoButton = document.getElementById('redoButton');
 const searchInput = document.getElementById('searchInput');
 const searchButton = document.getElementById('searchButton');
+const summaryButton = document.getElementById('summaryButton');
+const summaryOutput = document.getElementById('summaryOutput');
 
 const state = {
   activePreviewUrl: '',
@@ -95,6 +97,7 @@ function clearPreview() {
   processedCanvas.width = 0;
   processedCanvas.height = 0;
   resultText.value = '';
+  summaryOutput.value = '';
   state.textHistory = [];
   state.historyIndex = -1;
   undoButton.disabled = true;
@@ -261,22 +264,30 @@ async function performScan() {
     return;
   }
 
-  try {
-    await ensureOcrIsReady();
-    const processed = buildProcessedCanvas(state.currentImage);
-    renderProcessedCanvas(processed);
-    setStatus('OCR in progress...', 'processing');
+  const file = fileInput.files[0];
+  if (!file) {
+    showError('Please choose an image file first.');
+    return;
+  }
 
-    const result = await window.Tesseract.recognize(processed, 'eng+hin', {
-      logger: (message) => {
-        if (message.status === 'recognizing text' && typeof message.progress === 'number') {
-          const percentage = Math.round(message.progress * 100);
-          setStatus(`OCR in progress: ${percentage}%`, 'processing');
-        }
-      },
+  setStatus('OCR in progress...', 'processing');
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch('/api/ocr', {
+      method: 'POST',
+      body: formData,
     });
 
-    const cleanedText = (result.data.text || '').trim();
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'OCR failed.');
+    }
+
+    const cleanedText = (data.text || '').trim();
     if (!cleanedText) {
       resultText.value = 'No text detected. Please try a clearer image or adjust the preprocessing settings.';
       pushHistory(resultText.value);
@@ -287,9 +298,37 @@ async function performScan() {
     resultText.value = cleanedText;
     pushHistory(cleanedText);
     setStatus('OCR completed successfully.', 'success');
-  } catch (error) {
-    setStatus('OCR failed. Please try again.', 'error');
-    showError('OCR could not run for this image. Please try a different image or processor settings.');
+    return;
+  } catch (backendError) {
+    try {
+      await ensureOcrIsReady();
+      const processed = buildProcessedCanvas(state.currentImage);
+      renderProcessedCanvas(processed);
+
+      const result = await window.Tesseract.recognize(processed, 'eng+hin', {
+        logger: (message) => {
+          if (message.status === 'recognizing text' && typeof message.progress === 'number') {
+            const percentage = Math.round(message.progress * 100);
+            setStatus(`OCR in progress: ${percentage}%`, 'processing');
+          }
+        },
+      });
+
+      const cleanedText = (result.data.text || '').trim();
+      if (!cleanedText) {
+        resultText.value = 'No text detected. Please try a clearer image or adjust the preprocessing settings.';
+        pushHistory(resultText.value);
+        setStatus('No text detected.', 'error');
+        return;
+      }
+
+      resultText.value = cleanedText;
+      pushHistory(cleanedText);
+      setStatus('OCR completed successfully.', 'success');
+    } catch (fallbackError) {
+      setStatus('OCR failed. Please try again.', 'error');
+      showError(fallbackError?.message || 'OCR could not run for this image. Please try a different image or processor settings.');
+    }
   }
 }
 
@@ -329,6 +368,43 @@ function searchText() {
   resultText.setSelectionRange(index, index + query.length);
   resultText.scrollTop = 0;
   setStatus(`Found match for: ${query}`, 'success');
+}
+
+async function generateSummary() {
+  const text = resultText.value.trim();
+
+  if (!text) {
+    showError('Please scan an image first to generate a summary.');
+    return;
+  }
+
+  summaryButton.disabled = true;
+  setStatus('Generating summary...', 'processing');
+
+  try {
+    const response = await fetch('/api/summarize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Summary generation failed.');
+    }
+
+    summaryOutput.value = data.summary || 'Summary unavailable.';
+    setStatus(data.source === 'ai' ? 'AI summary generated.' : 'Summary generated.', 'success');
+  } catch (error) {
+    summaryOutput.value = '';
+    setStatus('Summary failed.', 'error');
+    showError(error?.message || 'Unable to generate a summary right now.');
+  } finally {
+    summaryButton.disabled = false;
+  }
 }
 
 uploadButton.addEventListener('click', openFilePicker);
@@ -392,6 +468,7 @@ autoEnhanceButton.addEventListener('click', applyAutoEnhance);
 copyButton.addEventListener('click', copyText);
 selectAllButton.addEventListener('click', selectAllText);
 searchButton.addEventListener('click', searchText);
+summaryButton.addEventListener('click', generateSummary);
 resultText.addEventListener('input', updateTextHistoryFromEditor);
 undoButton.addEventListener('click', () => applyHistory(-1));
 redoButton.addEventListener('click', () => applyHistory(1));

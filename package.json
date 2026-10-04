@@ -5,6 +5,6 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "start": "python -m http.server 4173"
+    "start": "python app.py"
   }
 }
