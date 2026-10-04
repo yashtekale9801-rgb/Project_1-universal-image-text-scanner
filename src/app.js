@@ -390,7 +390,15 @@ async function generateSummary() {
       body: JSON.stringify({ text }),
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      const message = response.status === 404
+        ? 'The summary API was not found on this site. Deploy the Flask backend and connect the frontend to it.'
+        : `The summary API returned an invalid response (HTTP ${response.status}). Check that the Flask backend is running and reachable.`;
+      throw new Error(message);
+    }
 
     if (!response.ok) {
       throw new Error(data.error || 'Summary generation failed.');
