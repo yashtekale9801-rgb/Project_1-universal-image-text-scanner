@@ -28,6 +28,7 @@ Project1_Scan_Image/
 |-- requirements.txt        Python packages for the backend
 |-- src/
 |   |-- app.js              Browser behavior and API calls
+|   |-- config.js           Backend API URL setting
 |   `-- validation.js       Supported image file checks
 |-- tests/
 |   |-- test_summary.py     Summary API tests
@@ -82,6 +83,17 @@ $env:OPENAI_API_KEY = "your-api-key"
 ```
 
 The key stays on the backend and should never be added to browser JavaScript or committed to Git. Without the key, the app returns a short local fallback summary.
+
+## Deploy Vercel frontend with a Flask backend
+
+Vercel hosts the frontend. The Flask API must also be deployed to a Python web host such as Render.
+
+1. In Render, create a Web Service from this GitHub repository. The included `.python-version` selects Python 3.12.10. Use `pip install -r requirements.txt` as the build command and `waitress-serve --host=0.0.0.0 --port=$PORT app:app` as the start command.
+2. Set `FRONTEND_ORIGINS` to `https://project1-universal-image-text-scann.vercel.app`. Add `OPENAI_API_KEY` as a secret environment variable if AI summaries should use an LLM.
+3. After Render gives you a public service URL, put that origin in `API_BASE_URL` in [src/config.js](src/config.js), for example `https://your-service.onrender.com`.
+4. Commit and push the config change. Vercel should redeploy the frontend from GitHub.
+
+EasyOCR and PyTorch need more memory than a small static site. Choose a backend plan with enough memory, and expect the first startup to download the OCR models. The backend's `/health` URL should return `{"status":"ok"}` when it is ready.
 
 ## Supported image formats
 

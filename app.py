@@ -8,6 +8,16 @@ from flask import Flask, jsonify, request, send_from_directory
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
+DEFAULT_FRONTEND_ORIGINS = (
+    'http://localhost:4173,http://localhost:4174,'
+    'https://project1-universal-image-text-scann.vercel.app'
+)
+FRONTEND_ORIGINS = {
+    origin.strip().rstrip('/')
+    for origin in os.getenv('FRONTEND_ORIGINS', DEFAULT_FRONTEND_ORIGINS).split(',')
+    if origin.strip()
+}
+
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -20,6 +30,17 @@ try:
     reader = easyocr.Reader(['en', 'hi'], gpu=False)
 except Exception:
     reader = None
+
+
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get('Origin', '').rstrip('/')
+    if origin in FRONTEND_ORIGINS:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Vary'] = 'Origin'
+    return response
 
 
 def normalize_text_for_summary(raw_text):

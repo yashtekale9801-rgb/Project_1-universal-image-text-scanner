@@ -1,4 +1,5 @@
 import { isValidImageFile, getUnsupportedFileMessage } from './validation.js';
+import { buildApiUrl } from './config.js';
 
 const fileInput = document.getElementById('fileInput');
 const dropZone = document.getElementById('dropZone');
@@ -276,7 +277,7 @@ async function performScan() {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await fetch('/api/ocr', {
+    const response = await fetch(buildApiUrl('/api/ocr'), {
       method: 'POST',
       body: formData,
     });
@@ -382,7 +383,7 @@ async function generateSummary() {
   setStatus('Generating summary...', 'processing');
 
   try {
-    const response = await fetch('/api/summarize', {
+    const response = await fetch(buildApiUrl('/api/summarize'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

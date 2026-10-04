@@ -3,3 +3,4 @@ EasyOCR==1.7.1
 Pillow==10.4.0
 numpy==2.1.2
 opencv-python-headless==4.10.0.84
+waitress==3.0.2

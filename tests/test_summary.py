@@ -33,3 +33,30 @@ def test_summarize_text_requires_text(client):
     assert response.status_code == 400
     data = response.get_json()
     assert 'error' in data
+
+
+def test_api_allows_configured_vercel_origin(client):
+    response = client.options(
+        '/api/summarize',
+        headers={
+            'Origin': 'https://project1-universal-image-text-scann.vercel.app',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'content-type',
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers['Access-Control-Allow-Origin'] == 'https://project1-universal-image-text-scann.vercel.app'
+    assert 'POST' in response.headers['Access-Control-Allow-Methods']
+
+
+def test_api_does_not_allow_unconfigured_origin(client):
+    response = client.options(
+        '/api/summarize',
+        headers={
+            'Origin': 'https://untrusted.example',
+            'Access-Control-Request-Method': 'POST',
+        },
+    )
+
+    assert 'Access-Control-Allow-Origin' not in response.headers
