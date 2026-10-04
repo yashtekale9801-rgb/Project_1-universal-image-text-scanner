@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Universal Image Text Scanner</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Phase 1 - 4</p>
+          <h1>Universal Image Text Scanner</h1>
+        </div>
+      </header>
+
+      <section class="card upload-card">
+        <div class="toolbar">
+          <button id="uploadButton" type="button" class="primary-button">Choose Image</button>
+          <input id="fileInput" type="file" accept="image/*" hidden />
+        </div>
+
+        <div id="dropZone" class="drop-zone" aria-label="Upload image area">
+          <div class="drop-zone-inner">
+            <span class="icon">🖼️</span>
+            <h2>Drop an image here</h2>
+            <p>or click to browse from your device</p>
+            <small>Supports JPG, JPEG, PNG, WEBP, BMP, and TIFF</small>
+          </div>
+        </div>
+
+        <div id="preview" class="preview-panel" aria-live="polite">
+          <div class="preview-header">
+            <span class="label">Preview</span>
+            <span id="fileName" class="file-name">No image selected</span>
+          </div>
+          <img id="previewImage" alt="Selected preview" />
+        </div>
+      </section>
+
+      <section class="card controls-card">
+        <div class="control-grid">
+          <label>
+            Rotation
+            <select id="rotationSelect">
+              <option value="0">0°</option>
+              <option value="90">90°</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
+            </select>
+          </label>
+
+          <label>
+            Max size
+            <input id="maxDimension" type="range" min="800" max="2400" step="100" value="1800" />
+            <span id="maxDimensionValue">1800px</span>
+          </label>
+
+          <label>
+            Contrast
+            <input id="contrastSlider" type="range" min="1" max="2.5" step="0.05" value="1.35" />
+            <span id="contrastValue">1.35x</span>
+          </label>
+
+          <label class="checkbox-row">
+            <input id="grayscaleToggle" type="checkbox" />
+            Grayscale
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="autoEnhanceButton" type="button" class="secondary-button">Auto Enhance</button>
+          <button id="scanButton" type="button" class="primary-button">Scan Image</button>
+        </div>
+
+        <div id="ocrStatus" class="status" data-tone="idle">Ready to scan</div>
+      </section>
+
+      <section class="card results-card">
+        <div class="results-grid">
+          <div class="result-panel">
+            <div class="panel-header">
+              <h2>Processed Image</h2>
+            </div>
+            <canvas id="processedCanvas" width="0" height="0"></canvas>
+          </div>
+
+          <div class="result-panel">
+            <div class="panel-header editor-header">
+              <h2>Extracted Text</h2>
+              <div class="editor-tools">
+                <button id="copyButton" type="button">Copy</button>
+                <button id="selectAllButton" type="button">Select All</button>
+                <button id="undoButton" type="button">Undo</button>
+                <button id="redoButton" type="button">Redo</button>
+              </div>
+            </div>
+
+            <div class="search-row">
+              <input id="searchInput" type="text" placeholder="Search extracted text" />
+              <button id="searchButton" type="button" class="secondary-button">Find</button>
+            </div>
+
+            <textarea id="resultText" placeholder="Extracted text will appear here..."></textarea>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="errorToast" class="error-toast" role="alert" aria-live="assertive"></div>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
